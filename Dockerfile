@@ -7,9 +7,10 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 # Run Stage
+# Run Stage
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-# We look for the jar file in the target folder
-COPY --from=build /app/target/*.jar app.jar
+# This looks specifically for the 'app.jar' we named in pom.xml
+COPY --from=build /app/target/app.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
