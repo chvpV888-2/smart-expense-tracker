@@ -1,7 +1,9 @@
 let myChart;
 
-// Initialize the app
-loadData();
+// This ensures the code only runs after the page (and Chart.js) has loaded
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+});
 
 async function loadData() {
     try {
@@ -49,7 +51,7 @@ async function deleteExpense(id) {
 function updateChart(data) {
     const categories = [...new Set(data.map(ex => ex.category))];
     const totals = categories.map(cat =>
-        data.filter(ex => ex.category === cat).reduce((sum, ex) => sum + ex.amount, 0)
+        data.filter(ex => ex.category === cat).reduce((sum, ex) => sum + Number(ex.amount), 0)
     );
 
     // Update Top Category Card
@@ -61,8 +63,12 @@ function updateChart(data) {
         document.getElementById('topCategory').innerText = "-";
     }
 
-    const ctx = document.getElementById('expenseChart').getContext('2d');
+    const canvas = document.getElementById('expenseChart');
+    if (!canvas) return; // Guard clause
+
+    const ctx = canvas.getContext('2d');
     if (myChart) myChart.destroy();
+
     myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -81,19 +87,25 @@ function updateChart(data) {
     });
 }
 
+// Fixed the form submission
 document.getElementById('expenseForm').onsubmit = async (e) => {
     e.preventDefault();
     const expense = {
         description: document.getElementById('desc').value,
-        amount: document.getElementById('amt').value,
+        amount: parseFloat(document.getElementById('amt').value),
         category: document.getElementById('cat').value,
         date: document.getElementById('date').value
     };
-    await fetch('/api/expenses', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(expense)
-    });
-    e.target.reset();
-    loadData();
+
+    try {
+        await fetch('/api/expenses', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(expense)
+        });
+        e.target.reset();
+        loadData();
+    } catch (error) {
+        console.error("Error saving expense:", error);
+    }
 };
