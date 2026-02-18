@@ -53,10 +53,11 @@ A modern, full-stack expense management dashboard built with **Spring Boot 3**, 
 ## 🐳 Docker Deployment
 This project includes a `Dockerfile` for easy deployment to cloud platforms like Render or AWS:
 ```dockerfile
+# Build and run using Docker
+docker build -t expense-tracker .
+docker run -p 8080:8080 expense-tracker
+
 🤝 Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
 
 Developed with ❤️ by Chavi Bhatia
-# Build and run using Docker
-docker build -t expense-tracker .
-docker run -p 8080:8080 expense-tracker
