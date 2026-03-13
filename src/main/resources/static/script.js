@@ -109,3 +109,34 @@ document.getElementById('expenseForm').onsubmit = async (e) => {
         console.error("Error saving expense:", error);
     }
 };
+// STEP 5: Add this to the bottom of your script.js
+
+// 1. Grab the boxes using YOUR exact ID names ("desc" and "cat")
+const descriptionBox = document.getElementById('desc');
+const categoryDropdown = document.getElementById('cat');
+const aiStatusText = document.getElementById('ai-status');
+
+// 2. Listen for when they finish typing
+descriptionBox.addEventListener('blur', async function() {
+
+    let typedWord = descriptionBox.value;
+
+    if (typedWord.length > 2) {
+        try {
+            // Knock on the Controller Door
+            let response = await fetch(`/api/expenses/categorize?description=${typedWord}`);
+            let aiAnswer = await response.text();
+
+            // Change the dropdown box
+            categoryDropdown.value = aiAnswer;
+
+            // Show the green magic text!
+            aiStatusText.style.display = "inline";
+
+            // Hide it after 3 seconds
+            setTimeout(() => { aiStatusText.style.display = "none"; }, 3000);
+        } catch (error) {
+            console.log("AI is sleeping right now!");
+        }
+    }
+});

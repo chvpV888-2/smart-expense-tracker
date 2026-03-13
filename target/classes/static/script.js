@@ -1,7 +1,9 @@
 let myChart;
 
-// Initialize the app
-loadData();
+// This ensures the code only runs after the page (and Chart.js) has loaded
+document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+});
 
 async function loadData() {
     try {
@@ -49,7 +51,7 @@ async function deleteExpense(id) {
 function updateChart(data) {
     const categories = [...new Set(data.map(ex => ex.category))];
     const totals = categories.map(cat =>
-        data.filter(ex => ex.category === cat).reduce((sum, ex) => sum + ex.amount, 0)
+        data.filter(ex => ex.category === cat).reduce((sum, ex) => sum + Number(ex.amount), 0)
     );
 
     // Update Top Category Card
@@ -61,8 +63,12 @@ function updateChart(data) {
         document.getElementById('topCategory').innerText = "-";
     }
 
-    const ctx = document.getElementById('expenseChart').getContext('2d');
+    const canvas = document.getElementById('expenseChart');
+    if (!canvas) return; // Guard clause
+
+    const ctx = canvas.getContext('2d');
     if (myChart) myChart.destroy();
+
     myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -81,19 +87,56 @@ function updateChart(data) {
     });
 }
 
+// Fixed the form submission
 document.getElementById('expenseForm').onsubmit = async (e) => {
     e.preventDefault();
     const expense = {
         description: document.getElementById('desc').value,
-        amount: document.getElementById('amt').value,
+        amount: parseFloat(document.getElementById('amt').value),
         category: document.getElementById('cat').value,
         date: document.getElementById('date').value
     };
-    await fetch('/api/expenses', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(expense)
-    });
-    e.target.reset();
-    loadData();
+
+    try {
+        await fetch('/api/expenses', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(expense)
+        });
+        e.target.reset();
+        loadData();
+    } catch (error) {
+        console.error("Error saving expense:", error);
+    }
 };
+// STEP 5: Add this to the bottom of your script.js
+
+// 1. Grab the boxes using YOUR exact ID names ("desc" and "cat")
+const descriptionBox = document.getElementById('desc');
+const categoryDropdown = document.getElementById('cat');
+const aiStatusText = document.getElementById('ai-status');
+
+// 2. Listen for when they finish typing
+descriptionBox.addEventListener('blur', async function() {
+
+    let typedWord = descriptionBox.value;
+
+    if (typedWord.length > 2) {
+        try {
+            // Knock on the Controller Door
+            let response = await fetch(`/api/expenses/categorize?description=${typedWord}`);
+            let aiAnswer = await response.text();
+
+            // Change the dropdown box
+            categoryDropdown.value = aiAnswer;
+
+            // Show the green magic text!
+            aiStatusText.style.display = "inline";
+
+            // Hide it after 3 seconds
+            setTimeout(() => { aiStatusText.style.display = "none"; }, 3000);
+        } catch (error) {
+            console.log("AI is sleeping right now!");
+        }
+    }
+});
